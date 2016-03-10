@@ -13,7 +13,28 @@ public class Genetic {
         // здесь будет хардкод. Т.е. реализация этой процедуры зависит от массива initialPopulation
         double[] newPopulation = initialPopulation;
 
-        // и здесь я понял, что голова уже совсем не варит и пора спать.!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        for(int i = 0; i < initialPopulation.length - 1; i++) {
+
+            String child = crossover(Integer.toBinaryString((int)initialPopulation[i]),
+                                     Integer.toBinaryString((int)initialPopulation[i+1]));
+
+
+             // pseudo code
+            //newPopulation[i] = crossover(initialPopulation[i], initialPopulation[i+1]);
+
+            newPopulation[i] = Integer.parseInt(child, 2);
+
+        }
+        // дополняем граничные значения, т.е. скрещиваем последний элемент с первым
+        // см. баг в crossover
+
+        newPopulation[newPopulation.length-1] =  Integer.parseInt(
+                crossover(Integer.toBinaryString((int)initialPopulation[initialPopulation.length-1]),
+                         Integer.toBinaryString((int)initialPopulation[0]))
+
+        );
+
+        initialPopulation = newPopulation;
 
     }
 
@@ -21,6 +42,9 @@ public class Genetic {
 
     // вопрос. Зачем нам тип данных boolean ? Уже ведь есть готовая ф-я, которая переводит число в бинарное представление строки.
 
+
+    // Есть баг, наверное. Допустим, имеем число 5, оно будет преобразовано в двоичное 101.
+    // А у меня, по ходу, логика завязана на то, что это будет 0101.
 
     // на вход требует две строки в бинарном представлении. Можно, конечно, подать и произвольные строки, но тогда результат просто нельзя будет преобразовать в двоичный код
     public String crossover(String e1, String e2){
@@ -37,7 +61,7 @@ public class Genetic {
 
 
     public Genetic() {
-        initialPopulation = new double[] {1.0, 2.0, 3.0, 4.0};
+        initialPopulation = new double[] {3.0, 2.0, 3.0, 4.0};
 /*
         Пока что будем работать только с областью определения. Мне не зачем еще таскать за собой значения ф-и.
         Критерием успешности алгоритма - это нахождение правильной точки из области определения ф-и.
@@ -65,12 +89,32 @@ public class Genetic {
                 break;
             }
 
-            genAl.changePopulation();
+           // genAl.changePopulation();
+
+        }
+
+
+        for(double x : genAl.initialPopulation) {
+            System.out.println(x);
+
+        }
+
+        genAl.changePopulation();
+
+
+        System.out.println("NEW POPULATION");
+
+
+        for(double x : genAl.initialPopulation) {
+            System.out.println(x);
 
         }
 
 
 
+        System.out.println(Integer.toBinaryString(5));
+
+/*
 
 
         System.out.println(Integer.toBinaryString(15)); // а есть ли обратное преобразование ? Есть. См. ниже
@@ -97,7 +141,7 @@ public class Genetic {
 
         );
 
-
+*/
         //System.out.println(genAl.initialPopulation[1]);
 
         //System.out.println(genAl.initialPopulation.length);
