@@ -65,25 +65,68 @@ public class Genetic {
 
         //int anchor = 1;  // in perspective rand()
 
+        int anchor = randInt(0,e1.length()-1);
 
-         int anchor = randInt(0,e1.length()-1);
 
         StringBuilder res = new StringBuilder(e1);
 
         for(int i = anchor; i < e1.length(); i++){
             res.setCharAt(i, e2.charAt(i) );          // заменяем все символы e1 на символы e2 после якоря anchor
         }
+            // мутация. Вероятность 5%
+         if(randInt(1,100) == 5) {
+             res = new StringBuilder(invertBits(res.toString())    );
+         }
 
         return res.toString();
     }
 
+    public static String invertBits(String e) {
+
+        String res = new String();
+        char replacement;
+
+        for(int i = 0; i < e.length(); i++){
+            //res.setCharAt(i, e2.charAt(i) );          // заменяем все символы e1 на символы e2 после якоря anchor
+
+            switch(e.charAt(i)){
+                case '0': replacement = '1';
+                    break;
+                case '1': replacement = '0';
+                    break;
+                case '+': replacement = '-';
+                    break;
+                case '-': replacement = '+';
+                    break;
+                default: replacement = '?'; // в таком случае процедура вызова что-то напорола, если имеем другие символы
+                    break;
+            }
+
+            res += replacement;
+        }
+
+        return res;
+    }
+
+/*
     private int randInt(int min, int max) {
         Random rand = new Random();
 
         int randomNum = rand.nextInt((max - min) + 1) + min;
         return randomNum;
     }
+*/
 
+    private static int randInt(int min, int max) {
+
+        if (min > max) {
+            throw new IllegalArgumentException("max must be greater than min");
+        }
+
+        return (int)(Math.random() * ((max - min) + 1)) + min;
+
+
+    }
 
     public Genetic(Double[] initialPopulation) {
         currentPopulation = initialPopulation;
@@ -102,8 +145,11 @@ public class Genetic {
     }
 
     public static void main(String[] args) {
+/*
+        Genetic genAl = new Genetic(new Double []{13.0, 40.0, 5.0, 6.0, 7.0, 8.0, 9.0});
 
-        Genetic genAl = new Genetic(new Double []{13.0, 40.0, 5.0, 6.0});
+
+        int populationNumber = 1;
 
         infiniteLoop:
         while(true) {
@@ -118,6 +164,7 @@ public class Genetic {
             }
 
             genAl.changePopulation();
+            populationNumber++;
 
             System.out.println("NEW POPULATION");
             for(double x : genAl.currentPopulation) {
@@ -126,8 +173,28 @@ public class Genetic {
             }
         }
 
+        System.out.println(populationNumber + " популяция дала решение");
+*/
 
 
+        Double d =5.0;
+
+
+        System.out.println(
+        d.hashCode()
+        );
+/*
+
+        System.out.println(
+        invertBits("-11500")
+        );
+*/
+        /*
+System.out.println(
+        Integer.parseInt("+5")
+
+
+); // OK*/
 /*
         System.out.println(
         Integer.toBinaryString(-6)             // метод предназначен только для беззнаковых преобразований!!! Хреново!!!
