@@ -1,5 +1,6 @@
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Random;
 
 /**
  * Created by arty on 27.02.16.
@@ -62,7 +63,11 @@ public class Genetic {
     // на вход требует две строки в бинарном представлении. Можно, конечно, подать и произвольные строки, но тогда результат просто нельзя будет преобразовать в двоичный код
      private String crossover(String e1, String e2){
 
-        int anchor = 1;  // in perspective rand()
+        //int anchor = 1;  // in perspective rand()
+
+
+         int anchor = randInt(0,e1.length()-1);
+
         StringBuilder res = new StringBuilder(e1);
 
         for(int i = anchor; i < e1.length(); i++){
@@ -70,6 +75,13 @@ public class Genetic {
         }
 
         return res.toString();
+    }
+
+    private int randInt(int min, int max) {
+        Random rand = new Random();
+
+        int randomNum = rand.nextInt((max - min) + 1) + min;
+        return randomNum;
     }
 
 
@@ -91,7 +103,7 @@ public class Genetic {
 
     public static void main(String[] args) {
 
-        Genetic genAl = new Genetic(new Double []{13.0, 4.0, 5.0, 6.0});
+        Genetic genAl = new Genetic(new Double []{13.0, 40.0, 5.0, 6.0});
 
         infiniteLoop:
         while(true) {
@@ -114,5 +126,17 @@ public class Genetic {
             }
         }
 
+
+
+/*
+        System.out.println(
+        Integer.toBinaryString(-6)             // метод предназначен только для беззнаковых преобразований!!! Хреново!!!
+        );
+
+
+        String s = Integer.toString(7,2); // the 2 is what converts it to binary  // решаем проблему обычным добавлением знака
+
+        System.out.println(s);
+*/
     }
 }
