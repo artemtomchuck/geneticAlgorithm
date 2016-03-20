@@ -1,28 +1,41 @@
+import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
 
 /**
  * Created by arty on 27.02.16.
+ * Welcome to hell
  */
 
-/* С отрицательными числами пока что беда. Но это можно будет пофиксить при желании позже.
-
-    Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String index out of range: 8
-	at java.lang.String.charAt(String.java:658)
-	at Genetic.crossover(Genetic.java:66)
-	at Genetic.changePopulation(Genetic.java:36)
-	at Genetic.main(Genetic.java:113)
-
- */
 public class Genetic {
-    public double f(double x){
-        return x*Math.sin(x);
-    } // область определения нашей ф-и [0,18]. Но для простоты сделаем [0,15], чтобы уложить искомое число из области определения в 4 бита ХХХХ
+    public double fitnessFn(double x){ // ->MAX
+        //return x*Math.sin(x);
+
+        //return Math.exp(x)*Math.sin(x);
+
+        //return 1/x;
+
+        // return 2*x*x*x - 15*x*x+ 36*x - 14;
+
+        //return Math.sin(x)*Math.cos(x);
+
+        //попробуем подставить случайную функцию. Результат всега будет разным
+        // return randInt(-100, 100)*Math.pow(x, randInt(0,5)*Math.sin(x));
+
+        //return Math.pow(x, Math.sin(x));
+
+        return Math.log(x)*Math.sin(x);
+
+    }
 
     public Double[] currentPopulation;     // только X координаты для исходной популяции
-    public Double analyticDecision;        // значение ф-и всегда можно найти по её аргументу, поэтому нам не зачем его за собой таскать
 
+    private Point2D.Double currentBestDecision;
+    private int unsuccessfulPopulationNumberPerMutation;
+    private int unsuccessfulMutationNumber;
+
+    private int argumentMaxBitSize;
 
     private String intToBinaryString(int input, int outputBitNum) {
         String res = Integer.toBinaryString(input);
@@ -37,26 +50,45 @@ public class Genetic {
     public void changePopulation() {
         Double[] newPopulation  = currentPopulation.clone(); // важно, чтобы объект currentPopulation не изменился
 
-        Double maxFromCurrentPopulation =  Collections.max(Arrays.asList(currentPopulation));
-        int maxBitSize = Integer.toBinaryString(maxFromCurrentPopulation.intValue()).length();
+        for(int i = 0; i < currentPopulation.length; i++) {
 
-        for(int i = 0; i < currentPopulation.length - 1; i++) {
-
-            String child = crossover(intToBinaryString(currentPopulation[i].intValue(), maxBitSize),
-                                     intToBinaryString(currentPopulation[i+1].intValue(), maxBitSize));
+            String child = crossover(intToBinaryString(currentPopulation[i].intValue(), argumentMaxBitSize),
+                    intToBinaryString(currentPopulation[randInt(0,currentPopulation.length-1)].intValue(), argumentMaxBitSize));
 
             newPopulation[i] = (double)Integer.parseInt(child, 2);
 
         }
-        // дополняем граничные значения, т.е. скрещиваем последний элемент с первым
-
-        newPopulation[newPopulation.length-1] =  (double)Integer.parseInt(
-                crossover(intToBinaryString(currentPopulation[currentPopulation.length-1].intValue(), maxBitSize),
-                         intToBinaryString(currentPopulation[0].intValue(), maxBitSize)), 2
-
-        );
 
         currentPopulation = newPopulation;
+
+
+        if(findBestCurrentDecision().getY() > currentBestDecision.getY()) {
+            currentBestDecision = findBestCurrentDecision();
+        }
+        else
+        {
+            unsuccessfulPopulationNumberPerMutation++;
+        }
+
+
+        if(unsuccessfulPopulationNumberPerMutation >= 100) {
+            unsuccessfulPopulationNumberPerMutation = 0;
+
+            int randElementIndex = randInt(0,currentPopulation.length-1);
+
+            currentPopulation[randElementIndex] =
+                    (double) Integer.parseInt(
+                            invertBits(
+                                    intToBinaryString(currentPopulation[randElementIndex].intValue(), argumentMaxBitSize)
+
+                                      ),
+                                              2);
+
+
+            unsuccessfulMutationNumber++;
+
+        }
+
 
     }
 
@@ -73,21 +105,16 @@ public class Genetic {
         for(int i = anchor; i < e1.length(); i++){
             res.setCharAt(i, e2.charAt(i) );          // заменяем все символы e1 на символы e2 после якоря anchor
         }
-            // мутация. Вероятность 5%
-         if(randInt(1,100) == 5) {
-             res = new StringBuilder(invertBits(res.toString())    );
-         }
 
         return res.toString();
     }
 
     public static String invertBits(String e) {
 
-        String res = new String();
+        String res = "";
         char replacement;
 
         for(int i = 0; i < e.length(); i++){
-            //res.setCharAt(i, e2.charAt(i) );          // заменяем все символы e1 на символы e2 после якоря anchor
 
             switch(e.charAt(i)){
                 case '0': replacement = '1';
@@ -108,24 +135,31 @@ public class Genetic {
         return res;
     }
 
-/*
+
     private int randInt(int min, int max) {
         Random rand = new Random();
-
-        int randomNum = rand.nextInt((max - min) + 1) + min;
-        return randomNum;
+        return rand.nextInt((max - min) + 1) + min;
     }
-*/
 
-    private static int randInt(int min, int max) {
+    public void printCurrentPopulation() {
+        for(double x : currentPopulation) {
+            System.out.println(x);
+        }
+    }
 
-        if (min > max) {
-            throw new IllegalArgumentException("max must be greater than min");
+    Point2D.Double findBestCurrentDecision() {
+
+        Point2D.Double res = new Point2D.Double(currentPopulation[0], fitnessFn(currentPopulation[0])); // если мы не найдём лучшего решения на следующих особях данного поколения, то данная особь и есть решением
+
+        // нам не нужно проверять нулевой элемент массива самого с собой. Поэтому начнём с первого
+        for(int i = 1; i < currentPopulation.length; i++) {
+
+            if (fitnessFn(currentPopulation[i]) > res.getY()) {
+                res.setLocation(currentPopulation[i], fitnessFn(currentPopulation[i]));
+            }
         }
 
-        return (int)(Math.random() * ((max - min) + 1)) + min;
-
-
+        return res;
     }
 
     public Genetic(Double[] initialPopulation) {
@@ -137,73 +171,66 @@ public class Genetic {
         Значение функции всегда можно однозначно вычислить, исходя из значения точки Х.
 */
 
+        Double maxFromInitialPopulation =  Collections.max(Arrays.asList(initialPopulation));
 
-        /* точное аналитическое решение из wolframalpha.com (14.1724,14.2074)
-           Пока что для отладки кода взята простая целочисленная точка
-         */
-        analyticDecision = 14.0;
+        // задаём область определения будущего решения по количетсву разрядов максимального элемента исходной популяции
+        argumentMaxBitSize = Integer.toBinaryString(maxFromInitialPopulation.intValue()).length();
+
+
+        currentBestDecision = findBestCurrentDecision();
+        unsuccessfulPopulationNumberPerMutation = 0;
+        unsuccessfulMutationNumber = 0;
+
+
     }
 
+    private void pressAnyKeyToContinue()
+    {
+        System.out.println("Press any key to continue...");
+        try
+        {
+            System.in.read();
+        }
+        catch(Exception e)
+        {}
+    }
+    /* TODO: слишком много всего просходит во вне класса
+        В main должно быть только создание объекта и вызов метода решения.
+
+     */
     public static void main(String[] args) {
-/*
-        Genetic genAl = new Genetic(new Double []{13.0, 40.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+
+        Genetic genAl = new Genetic(new Double []{65.0, 65.0, 65.0});
 
 
-        int populationNumber = 1;
+        System.out.println("INITIAL POPULATION");
+        genAl.printCurrentPopulation();
+
 
         infiniteLoop:
         while(true) {
-            for(double x : genAl.currentPopulation){
 
-                if(x == genAl.analyticDecision) {
-                    System.out.println("Decision was found");
-                    System.out.println("Ymax = " + genAl.f(x) + " at x = " + x);
+            if(genAl.unsuccessfulMutationNumber > 100) {
+                System.out.println("Decision was found");
+                System.out.println("Ymax = " + genAl.currentBestDecision.getY() + " at x = " + genAl.currentBestDecision.getX());
 
-                    break infiniteLoop;
-                }
+                break infiniteLoop;
             }
 
             genAl.changePopulation();
-            populationNumber++;
+
+
 
             System.out.println("NEW POPULATION");
-            for(double x : genAl.currentPopulation) {
-                System.out.println(x);
+            genAl.printCurrentPopulation();
+            System.out.println(genAl.currentBestDecision);
 
-            }
+
+
+           // genAl.pressAnyKeyToContinue();
         }
 
-        System.out.println(populationNumber + " популяция дала решение");
-*/
 
 
-        Double d =5.0;
-
-
-        System.out.println(
-        d.hashCode()
-        );
-/*
-
-        System.out.println(
-        invertBits("-11500")
-        );
-*/
-        /*
-System.out.println(
-        Integer.parseInt("+5")
-
-
-); // OK*/
-/*
-        System.out.println(
-        Integer.toBinaryString(-6)             // метод предназначен только для беззнаковых преобразований!!! Хреново!!!
-        );
-
-
-        String s = Integer.toString(7,2); // the 2 is what converts it to binary  // решаем проблему обычным добавлением знака
-
-        System.out.println(s);
-*/
     }
 }
